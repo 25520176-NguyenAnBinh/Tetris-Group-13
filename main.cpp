@@ -91,6 +91,31 @@ void block2Board() {
             if (blocks[b][i][j] != ' ')
                 board[y + i][x + j] = blocks[b][i][j];
 }
+
+void removeLine() {
+    for (int i = 0; i < H - 1; i++) 
+    {
+        bool full = true;
+        
+        for (int j = 1; j < W - 1; j++) {
+            if (board[i][j] == ' ') { full = false; break; }
+        }
+        if (full) 
+        {
+            for (int k = i; k > 0; k--)
+            {
+                for (int j = 1; j < W - 1; j++)
+                {
+                    board[k][j] = board[k - 1][j];
+                }
+            }
+            for (int j = 1; j < W - 1; j++) board[0][j] = ' ';
+            i--;
+        }
+    }
+}
+
+
 void initBoard() {
     for (int i = 0; i < H; i++)
         for (int j = 0; j < W; j++)
