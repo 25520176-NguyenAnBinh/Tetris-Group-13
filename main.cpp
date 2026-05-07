@@ -1,6 +1,7 @@
 #include <iostream>
 #include <conio.h>
 #include <windows.h>
+#include <ctime>
 using namespace std;
 #define H 20
 #define W 15
@@ -73,6 +74,7 @@ char blocks[][4][4] = {
 };
 
 int x = 4, y = 0, b = 1;
+int speed = 200;
 void gotoxy(int x, int y) {
     COORD c = { x, y };
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), c);
@@ -138,6 +140,38 @@ bool canMove(int dx, int dy) {
     return true;
 }
 
+    void removeLine() {
+        int j;
+        bool removed = false;
+
+        for (int i = H - 2; i > 0; i--) {
+            for (j = 1; j < W - 1; j++)
+                if (board[i][j] == ' ') break;
+
+            if (j == W - 1) {
+                removed = true;
+
+                for (int ii = i; ii > 0; ii--)
+                    for (int j = 1; j < W - 1; j++)
+                        board[ii][j] = board[ii - 1][j];
+
+                i++;
+
+                draw();
+                Sleep(200);
+            }
+        }
+
+        // Nếu có xóa line thì tăng tốc
+        if (removed) {
+            speed -= 10;
+
+            // Giới hạn tốc độ tối thiểu
+            if (speed < 50)
+                speed = 50;
+        }
+    }
+
 
 int main()
 {
@@ -162,7 +196,7 @@ int main()
         }
         block2Board();
         draw();
-        Sleep(200);
+        Sleep(speed);
     }
     return 0;
 }
