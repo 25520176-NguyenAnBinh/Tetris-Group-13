@@ -92,11 +92,21 @@ void initBoard() {
             if ((i == H - 1) || (j == 0) || (j == W - 1)) board[i][j] = '#';
             else board[i][j] = ' ';
 }
-void draw() {
-    gotoxy(0, 0);
-    for (int i = 0; i < H; i++, cout << endl)
-        for (int j = 0; j < W; j++)
-            cout << board[i][j];
+void draw(){
+    gotoxy(0,0);
+    for (int i = 0 ; i < H ; i++) {
+        for (int j = 0 ; j < W ; j++) {
+            if (board[i][j] == '#') {
+                cout << "##"; // Viền dày gấp đôi
+            } else if (board[i][j] == ' ') {
+                cout << "  "; // Khoảng trống gấp đôi
+            } else {
+                // In ký tự block kèm 1 dấu cách hoặc in 2 ký tự giống nhau
+                cout << board[i][j] << board[i][j]; 
+            }
+        }
+        cout << "\n";
+    }
 }
 bool canMove(int dx, int dy) {
     for (int i = 0; i < 4; i++)
@@ -148,6 +158,12 @@ void rotateBlocks() {
 
 int main()
 {
+    // Ẩn con trỏ chuột để không bị nhấp nháy
+    HANDLE out = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_CURSOR_INFO cursorInfo;
+    GetConsoleCursorInfo(out, &cursorInfo);
+    cursorInfo.bVisible = false;
+    SetConsoleCursorInfo(out, &cursorInfo);
     srand(time(0));
     b = rand() % 7;
     copyBlocks();
