@@ -1,6 +1,7 @@
 #include <iostream>
 #include <conio.h>
 #include <windows.h>
+#include <ctime>
 using namespace std;
 #define H 20
 #define W 15
@@ -37,6 +38,8 @@ char blocks[][4][4] = {
 };
 char currentBlock[4][4];
 int x = 4, y = 0, b = 1;
+int speed = 200;
+
 void gotoxy(int x, int y) {
     COORD c = { x, y };
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), c);
@@ -58,6 +61,31 @@ void block2Board() {
             if (currentBlock[i][j] != ' ')
                 board[y + i][x + j] = currentBlock[i][j];
 }
+
+void removeLine() {
+    for (int i = 0; i < H - 1; i++) 
+    {
+        bool full = true;
+        
+        for (int j = 1; j < W - 1; j++) {
+            if (board[i][j] == ' ') { full = false; break; }
+        }
+        if (full) 
+        {
+            for (int k = i; k > 0; k--)
+            {
+                for (int j = 1; j < W - 1; j++)
+                {
+                    board[k][j] = board[k - 1][j];
+                }
+            }
+            for (int j = 1; j < W - 1; j++) board[0][j] = ' ';
+            i--;
+        }
+    }
+}
+
+
 void initBoard() {
     for (int i = 0; i < H; i++)
         for (int j = 0; j < W; j++)
@@ -132,18 +160,19 @@ int main()
             if (c == 'a' && canMove(-1, 0)) x--;
             if (c == 'd' && canMove(1, 0)) x++;
             if (c == 'x' && canMove(0, 1))  y++;
-            if (c == 'q') break;
             if (c == 'w' && canRotate()) rotateBlocks();
+            if (c == 'q') break;
         }
         if (canMove(0, 1)) y++;
         else {
             block2Board();
+            removeLine();
             x = 5; y = 0; b = rand() % 7;
             copyBlocks();
         }
         block2Board();
         draw();
-        Sleep(200);
+        Sleep(speed);
     }
     return 0;
 }
