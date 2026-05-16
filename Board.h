@@ -6,7 +6,7 @@
 class Board {
 private:
     char grid[20][15];
-    int speed;
+    int speed = 500;
 public:
     Board() {
         for (int i = 0; i < 20; i++)
