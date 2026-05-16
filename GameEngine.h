@@ -14,6 +14,7 @@ private:
     Piece* currentPiece;
     int speed;
     bool gameOver;
+    int score;
 
     // Hàm di chuyển con trỏ console (Giữ nguyên từ code gốc)
     void gotoxy(int x, int y) {
@@ -96,6 +97,7 @@ private:
             }
             cout << "\n";
         }
+        cout << "\nScore: " << score << endl;
     }
 
 public:
@@ -103,6 +105,7 @@ public:
         speed = 200; // Giữ nguyên tốc độ gốc
         currentPiece = nullptr;
         gameOver = false;
+        score=0;
 
         // Ẩn con trỏ chuột
         HANDLE out = GetStdHandle(STD_OUTPUT_HANDLE);
