@@ -16,6 +16,9 @@ private:
     Piece* holdPiece;      
     bool isHoldEmpty;      
     bool canHold;
+    int level;
+    bool gameOver;
+    int score;
 
     // Hàm di chuyển con trỏ console (Giữ nguyên từ code gốc)
     void gotoxy(int x, int y) {
@@ -38,6 +41,9 @@ private:
         // Đặt vị trí xuất phát giống code cũ của em
         currentPiece->x = 4;
         currentPiece->y = 0;
+        if (gameBoard.checkCollision(*currentPiece, currentPiece->x, currentPiece->y)) {
+    gameOver = true;
+}
     }
 
     // Tương đương khối lệnh if(_kbhit()) trong code gốc
@@ -116,6 +122,8 @@ private:
             }
             cout << "\n";
         }
+        cout << "Level: " << level << endl;
+        cout << "\nScore: " << score << endl;
     }
 
 public:
@@ -125,6 +133,9 @@ public:
         holdPiece = nullptr;
         isHoldEmpty = true;
         canHold = true;
+        level = 0;
+        gameOver = false;
+        score=0;
 
         // Ẩn con trỏ chuột
         HANDLE out = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -146,7 +157,7 @@ public:
         spawnPiece();
 
         // Vòng lặp vô tận y hệt code gốc
-        while (true) {
+        while (!gameOver) {
             handleInput();
 
             // Logic rơi y hệt code cũ: canMove(0,1) thì y++, else khóa và đẻ mới
@@ -157,7 +168,13 @@ public:
                 gameBoard.lockPiece(*currentPiece, currentPiece->x, currentPiece->y);
                 int linesCleared = gameBoard.removeLine();
                 // Xóa 1 dòng tăng 5ms, dòng thứ 2 tăng 10ms,... maxspeed là 50ms
-                speed = max(50, speed - linesCleared * 5);
+                if (linesCleared == 1) score += 100;
+                else if (linesCleared == 2) score += 300;
+                else if (linesCleared == 3) score += 500;
+                else if (linesCleared == 4) score += 800;
+                level = score / 500;
+                
+                speed = max(50, 200 - level * 20);
 
                 // Giải phóng RAM của viên gạch cũ trước khi tạo viên mới
                 delete currentPiece;
@@ -168,5 +185,10 @@ public:
             draw();
             Sleep(speed);
         }
+        gotoxy(10, 10);
+cout << "===== GAME OVER =====";
+
+gotoxy(10, 12);
+system("pause");
     }
 };
