@@ -131,6 +131,8 @@ public:
                 // Xóa 1 dòng tăng 5ms, dòng thứ 2 tăng 10ms,... maxspeed là 50ms
                 if (linesCleared == 1) score += 100;
                 else if (linesCleared == 2) score += 300;
+                else if (linesCleared == 3) score += 500;
+                
                 speed = max(50, speed - linesCleared * 5);
 
                 // Giải phóng RAM của viên gạch cũ trước khi tạo viên mới
