@@ -13,7 +13,7 @@ private:
     Board gameBoard;
     Piece* currentPiece;
     int speed;
-
+    int level;
     // Hàm di chuyển con trỏ console (Giữ nguyên từ code gốc)
     void gotoxy(int x, int y) {
         COORD c = { (SHORT)x, (SHORT)y };
@@ -92,12 +92,14 @@ private:
             }
             cout << "\n";
         }
+        cout << "Level: " << level << endl;
     }
 
 public:
     GameEngine() {
         speed = 200; // Giữ nguyên tốc độ gốc
         currentPiece = nullptr;
+         level = 0;
 
         // Ẩn con trỏ chuột
         HANDLE out = GetStdHandle(STD_OUTPUT_HANDLE);
