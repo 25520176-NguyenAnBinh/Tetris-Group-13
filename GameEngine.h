@@ -8,11 +8,15 @@
 
 using namespace std;
 
+// Các trạng thái của game
+enum GameState { PLAYING, PAUSED };
+
 class GameEngine {
 private:
     Board gameBoard;
     Piece* currentPiece;
     int speed;
+    GameState state;
 
     // Hàm di chuyển con trỏ console (Giữ nguyên từ code gốc)
     void gotoxy(int x, int y) {
@@ -41,25 +45,36 @@ private:
     void handleInput() {
         if (_kbhit()) {
             char c = _getch();
-            if (c == 'a' && !gameBoard.checkCollision(*currentPiece, currentPiece->x - 1, currentPiece->y))
-                currentPiece->x--;
-
-            if (c == 'd' && !gameBoard.checkCollision(*currentPiece, currentPiece->x + 1, currentPiece->y))
-                currentPiece->x++;
-
-            if (c == 'x' && !gameBoard.checkCollision(*currentPiece, currentPiece->x, currentPiece->y + 1))
-                currentPiece->y++;
-
-            if (c == 'w') {
-                currentPiece->rotate();
-                // Nếu xoay mà bị đè vào tường -> xoay ngược lại 3 lần (về như cũ)
-                if (gameBoard.checkCollision(*currentPiece, currentPiece->x, currentPiece->y)) {
-                    currentPiece->rotate();
-                    currentPiece->rotate();
-                    currentPiece->rotate();
+            // Bấm P để tạm dừng hoặc tiếp tục
+            if (c == 'p' || c == 'P') {
+                if (state == PLAYING) {
+                    state = PAUSED;
                 }
+                else {
+                    state = PLAYING;
+                }
+                system("cls"); // Xóa màn hình để chuẩn bị chuyển đổi giao diện hiển thị
+                return;
             }
-            if (c == 'q') exit(0); // Thoát game ngay lập tức như code gốc
+            // Chỉ cho phép di chuyển gạch nếu game đang ở trạng thái PLAYING
+            if (state == PLAYING) {
+                if (c == 'a' && !gameBoard.checkCollision(*currentPiece, currentPiece->x - 1, currentPiece->y))
+                    currentPiece->x--;
+                if (c == 'd' && !gameBoard.checkCollision(*currentPiece, currentPiece->x + 1, currentPiece->y))
+                    currentPiece->x++;
+                if (c == 'x' && !gameBoard.checkCollision(*currentPiece, currentPiece->x, currentPiece->y + 1))
+                    currentPiece->y++;
+                if (c == 'w') {
+                    currentPiece->rotate();
+                    // Nếu xoay mà bị đè vào tường -> xoay ngược lại 3 lần (về như cũ)
+                    if (gameBoard.checkCollision(*currentPiece, currentPiece->x, currentPiece->y)) {
+                        currentPiece->rotate();
+                        currentPiece->rotate();
+                        currentPiece->rotate();
+                    }
+                }
+                if (c == 'q') exit(0); // Thoát game ngay lập tức như code gốc
+            }
         }
     }
 
@@ -98,6 +113,7 @@ public:
     GameEngine() {
         speed = 200; // Giữ nguyên tốc độ gốc
         currentPiece = nullptr;
+        state = PLAYING;
 
         // Ẩn con trỏ chuột
         HANDLE out = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -120,22 +136,22 @@ public:
         // Vòng lặp vô tận y hệt code gốc
         while (true) {
             handleInput();
-
-            // Logic rơi y hệt code cũ: canMove(0,1) thì y++, else khóa và đẻ mới
-            if (!gameBoard.checkCollision(*currentPiece, currentPiece->x, currentPiece->y + 1)) {
-                currentPiece->y++;
+            if (state == PLAYING) {
+                // Logic rơi y hệt code cũ: canMove(0,1) thì y++, else khóa và đẻ mới
+                if (!gameBoard.checkCollision(*currentPiece, currentPiece->x, currentPiece->y + 1)) {
+                    currentPiece->y++;
+                }
+                else {
+                    gameBoard.lockPiece(*currentPiece, currentPiece->x, currentPiece->y);
+                    int linesCleared = gameBoard.removeLine();
+                    // Xóa 1 dòng tăng 5ms, dòng thứ 2 tăng 10ms,... maxspeed là 50ms
+                    speed = max(50, speed - linesCleared * 5);
+    
+                    // Giải phóng RAM của viên gạch cũ trước khi tạo viên mới
+                    delete currentPiece;
+                    spawnPiece();
+                }
             }
-            else {
-                gameBoard.lockPiece(*currentPiece, currentPiece->x, currentPiece->y);
-                int linesCleared = gameBoard.removeLine();
-                // Xóa 1 dòng tăng 5ms, dòng thứ 2 tăng 10ms,... maxspeed là 50ms
-                speed = max(50, speed - linesCleared * 5);
-
-                // Giải phóng RAM của viên gạch cũ trước khi tạo viên mới
-                delete currentPiece;
-                spawnPiece();
-            }
-
             draw();
             Sleep(speed);
         }
