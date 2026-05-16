@@ -16,7 +16,7 @@ public:
     }
     int getSpeed() const { return speed; }
 
-    bool checkCollision(const Shape& s, int nx, int ny) {
+    bool checkCollision(const Piece& s, int nx, int ny) {
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
                 if (s.getCell(i, j) != ' ') {
@@ -29,7 +29,7 @@ public:
         return false;
     }
 
-    void lockShape(const Shape& s, int x, int y) {
+    void lockPiece(const Piece& s, int x, int y) {
         for (int i = 0; i < 4; i++)
             for (int j = 0; j < 4; j++)
                 if (s.getCell(i, j) != ' ') grid[y + i][x + j] = s.getCell(i, j);
