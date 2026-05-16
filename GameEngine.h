@@ -13,6 +13,8 @@ private:
     Board gameBoard;
     Piece* currentPiece;
     int speed;
+    bool gameOver;
+    int score;
 
     // Hàm di chuyển con trỏ console (Giữ nguyên từ code gốc)
     void gotoxy(int x, int y) {
@@ -35,6 +37,9 @@ private:
         // Đặt vị trí xuất phát giống code cũ của em
         currentPiece->x = 4;
         currentPiece->y = 0;
+        if (gameBoard.checkCollision(*currentPiece, currentPiece->x, currentPiece->y)) {
+    gameOver = true;
+}
     }
 
     // Tương đương khối lệnh if(_kbhit()) trong code gốc
@@ -92,12 +97,15 @@ private:
             }
             cout << "\n";
         }
+        cout << "\nScore: " << score << endl;
     }
 
 public:
     GameEngine() {
         speed = 200; // Giữ nguyên tốc độ gốc
         currentPiece = nullptr;
+        gameOver = false;
+        score=0;
 
         // Ẩn con trỏ chuột
         HANDLE out = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -118,7 +126,7 @@ public:
         spawnPiece();
 
         // Vòng lặp vô tận y hệt code gốc
-        while (true) {
+        while (!gameOver) {
             handleInput();
 
             // Logic rơi y hệt code cũ: canMove(0,1) thì y++, else khóa và đẻ mới
@@ -144,5 +152,10 @@ public:
             draw();
             Sleep(speed);
         }
+        gotoxy(10, 10);
+cout << "===== GAME OVER =====";
+
+gotoxy(10, 12);
+system("pause");
     }
 };
