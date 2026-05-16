@@ -35,28 +35,25 @@ public:
                 if (s.getCell(i, j) != ' ') grid[y + i][x + j] = s.getCell(i, j);
     }
 
-void removeLine() {
-        int j;
-        bool removed = false;
-        for (int i = 18; i > 0; i--) {
-            // W - 1 tương đương 15 - 1 = 14 (cột sát tường phải)
-            for (j = 1; j < 14; j++)
-                if (grid[i][j] == ' ') break;
-            if (j == 14) { 
-                removed = true;
-                for (int ii = i; ii > 0; ii--)
-                    for (int j = 1; j < 14; j++)
-                        grid[ii][j] = grid[ii - 1][j];
-                i++; 
-                draw();
-                Sleep(200);
+int removeLine() {
+    int linesClearedThisTurn = 0; 
+    for (int i = 0; i < H - 1; i++) {
+        bool full = true;
+        for (int j = 1; j < W - 1; j++) {
+            if (grid[i][j] == ' ') { full = false; break; }
+        }
+        if (full) {
+            linesClearedThisTurn++; // Tăng số lượng dòng xóa được
+            for (int k = i; k > 0; k--) {
+                for (int j = 1; j < W - 1; j++) {
+                    grid[k][j] = grid[k - 1][j];
+                }
             }
+            for (int j = 1; j < W - 1; j++) grid[0][j] = ' ';
+            i--; 
         }
-        if (removed) {
-            speed -= 10;
-            if (speed < 50)
-                speed = 50;
-        }
+    }
+    return linesClearedThisTurn;
     }
 
     char getCell(int r, int c) const { return grid[r][c]; }
