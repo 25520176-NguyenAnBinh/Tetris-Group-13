@@ -10,6 +10,7 @@ public:
                 if (i == 19 || j == 0 || j == 14) grid[i][j] = '#';
                 else grid[i][j] = ' ';
     }
+    int getSpeed() const { return speed; }
 
     bool checkCollision(const Shape& s, int nx, int ny) {
         for (int i = 0; i < 4; i++) {
@@ -30,15 +31,27 @@ public:
                 if (s.getCell(i, j) != ' ') grid[y + i][x + j] = s.getCell(i, j);
     }
 
-    void clearLines() {
-        for (int i = 0; i < 19; i++) {
-            bool full = true;
-            for (int j = 1; j < 14; j++) if (grid[i][j] == ' ') { full = false; break; }
-            if (full) {
-                for (int k = i; k > 0; k--)
-                    for (int j = 1; j < 14; j++) grid[k][j] = grid[k - 1][j];
-                for (int j = 1; j < 14; j++) grid[0][j] = ' ';
+void removeLine() {
+        int j;
+        bool removed = false;
+        for (int i = 18; i > 0; i--) {
+            // W - 1 tương đương 15 - 1 = 14 (cột sát tường phải)
+            for (j = 1; j < 14; j++)
+                if (grid[i][j] == ' ') break;
+            if (j == 14) { 
+                removed = true;
+                for (int ii = i; ii > 0; ii--)
+                    for (int j = 1; j < 14; j++)
+                        grid[ii][j] = grid[ii - 1][j];
+                i++; 
+                draw();
+                Sleep(200);
             }
+        }
+        if (removed) {
+            speed -= 10;
+            if (speed < 50)
+                speed = 50;
         }
     }
 
