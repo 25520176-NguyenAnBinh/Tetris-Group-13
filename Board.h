@@ -1,7 +1,7 @@
 #pragma once
 #include "Piece.h"
-#include <windows.h>
-#include "GameEngine.h"
+
+
 
 class Board {
 private:
