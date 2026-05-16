@@ -135,6 +135,7 @@ public:
                 else if (linesCleared == 2) score += 300;
                 else if (linesCleared == 3) score += 500;
                 else if (linesCleared == 4) score += 800;
+                level = score / 500;
                 
                 speed = max(50, speed - linesCleared * 5);
 
