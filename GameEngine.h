@@ -1,11 +1,12 @@
-﻿#pragma once
+#pragma once
 #include <iostream>
 #include <conio.h>
 #include <windows.h>
 #include <ctime>
 #include "Board.h"
 #include "DerivedPiece.h" 
-
+#include "Lobby.h"
+#include "DifficultyManager.h"
 using namespace std;
 
 class GameEngine {
@@ -13,6 +14,16 @@ private:
     Board gameBoard;
     Piece* currentPiece;
     int speed;
+    Lobby lobby;
+    DifficultyManager difficultyManager;
+    enum GameState
+    {
+        LOBBY,
+        PLAYING,
+        EXIT
+    };
+    GameState state;
+    
 
     // Hàm di chuyển con trỏ console (Giữ nguyên từ code gốc)
     void gotoxy(int x, int y) {
@@ -94,16 +105,51 @@ private:
         }
     }
 
+    void updateGame()
+    {
+        handleInput();
+
+        if (!gameBoard.checkCollision(*currentPiece,
+            currentPiece->x,
+            currentPiece->y + 1))
+        {
+            currentPiece->y++;
+        }
+        else
+        {
+            gameBoard.lockPiece(*currentPiece,
+                currentPiece->x,
+                currentPiece->y);
+
+            int linesCleared = gameBoard.removeLine();
+
+            speed = max(50, speed - linesCleared * 5);
+
+            delete currentPiece;
+
+            spawnPiece();
+        }
+
+        draw();
+
+        Sleep(speed);
+    }
+
 public:
     GameEngine() {
-        speed = 200; // Giữ nguyên tốc độ gốc
+        speed = 200;
         currentPiece = nullptr;
 
-        // Ẩn con trỏ chuột
+        state = LOBBY;
+
         HANDLE out = GetStdHandle(STD_OUTPUT_HANDLE);
+
         CONSOLE_CURSOR_INFO cursorInfo;
+
         GetConsoleCursorInfo(out, &cursorInfo);
+
         cursorInfo.bVisible = false;
+
         SetConsoleCursorInfo(out, &cursorInfo);
     }
 
@@ -112,32 +158,48 @@ public:
     }
 
     // Hàm thay thế cho int main() cũ
-    void run() {
+    void run()
+    {
         srand((unsigned int)time(0));
-        system("cls");
-        spawnPiece();
 
-        // Vòng lặp vô tận y hệt code gốc
-        while (true) {
-            handleInput();
+        while (state != EXIT)
+        {
+            switch (state)
+            {
+            case LOBBY:
+            {
+                int choice = lobby.update();
 
-            // Logic rơi y hệt code cũ: canMove(0,1) thì y++, else khóa và đẻ mới
-            if (!gameBoard.checkCollision(*currentPiece, currentPiece->x, currentPiece->y + 1)) {
-                currentPiece->y++;
+                if (choice == 0)
+                {
+                    system("cls");
+
+                    spawnPiece();
+
+                    state = PLAYING;
+                }
+
+                else if (choice == 1)
+                {
+                    difficultyManager.chooseDifficulty();
+
+                    speed = difficultyManager.getSpeed();
+                }
+
+                else if (choice == 2)
+                {
+                    state = EXIT;
+                }
+
+                break;
             }
-            else {
-                gameBoard.lockPiece(*currentPiece, currentPiece->x, currentPiece->y);
-                int linesCleared = gameBoard.removeLine();
-                // Xóa 1 dòng tăng 5ms, dòng thứ 2 tăng 10ms,... maxspeed là 50ms
-                speed = max(50, speed - linesCleared * 5);
 
-                // Giải phóng RAM của viên gạch cũ trước khi tạo viên mới
-                delete currentPiece;
-                spawnPiece();
+            case PLAYING:
+            {
+                updateGame();
+                break;
             }
-
-            draw();
-            Sleep(speed);
+            }
         }
     }
 };
