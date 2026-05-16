@@ -137,7 +137,7 @@ public:
                 else if (linesCleared == 4) score += 800;
                 level = score / 500;
                 
-                speed = max(50, speed - linesCleared * 5);
+                speed = max(50, 200 - level * 20);
 
                 // Giải phóng RAM của viên gạch cũ trước khi tạo viên mới
                 delete currentPiece;
