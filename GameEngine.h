@@ -13,6 +13,9 @@ private:
     Board gameBoard;
     Piece* currentPiece;
     int speed;
+    Piece* holdPiece;      
+    bool isHoldEmpty;      
+    bool canHold;
     int level;
     bool gameOver;
     int score;
@@ -65,6 +68,27 @@ private:
                     currentPiece->rotate();
                 }
             }
+            if (c == 'c' && canHold) {
+                if (isHoldEmpty) {
+                    // Lần đầu bấm: Cất gạch hiện tại đi, đẻ ra gạch mới
+                    holdPiece = currentPiece;
+                    isHoldEmpty = false;
+                    spawnPiece();
+                }
+                else {
+                    // Đã có gạch: Hoán đổi 2 con trỏ cho nhau
+                    Piece* temp = currentPiece;
+                    currentPiece = holdPiece;
+                    holdPiece = temp;
+
+                    // Đặt lại tọa độ cho gạch vừa lấy ra từ Hold
+                    currentPiece->x = 4;
+                    currentPiece->y = 0;
+                }
+
+                // Khóa lại, không cho đổi liên tục trong lúc đang rơi nữa
+                canHold = false;
+            }
             if (c == 'q') exit(0); // Thoát game ngay lập tức như code gốc
         }
     }
@@ -106,6 +130,9 @@ public:
     GameEngine() {
         speed = 200; // Giữ nguyên tốc độ gốc
         currentPiece = nullptr;
+        holdPiece = nullptr;
+        isHoldEmpty = true;
+        canHold = true;
         level = 0;
         gameOver = false;
         score=0;
@@ -120,6 +147,7 @@ public:
 
     ~GameEngine() {
         if (currentPiece != nullptr) delete currentPiece;
+        if (holdPiece != nullptr) delete holdPiece;
     }
 
     // Hàm thay thế cho int main() cũ
@@ -151,6 +179,7 @@ public:
                 // Giải phóng RAM của viên gạch cũ trước khi tạo viên mới
                 delete currentPiece;
                 spawnPiece();
+                canHold = true;
             }
 
             draw();
