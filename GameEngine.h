@@ -127,7 +127,7 @@ public:
             }
             else {
                 gameBoard.lockPiece(*currentPiece, currentPiece->x, currentPiece->y);
-                gameBoard.clearLines();
+                gameBoard.removeLine();
 
                 // Giải phóng RAM của viên gạch cũ trước khi tạo viên mới
                 delete currentPiece;
