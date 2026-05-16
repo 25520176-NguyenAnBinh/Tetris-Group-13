@@ -1,8 +1,12 @@
+#pragma once
 #include "Shape.h"
+#include <windows.h>
+#include "GameEngine.h"
 
 class Board {
 private:
     char grid[20][15];
+    int speed;
 public:
     Board() {
         for (int i = 0; i < 20; i++)
