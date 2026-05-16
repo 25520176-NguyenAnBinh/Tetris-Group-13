@@ -127,7 +127,9 @@ public:
             }
             else {
                 gameBoard.lockPiece(*currentPiece, currentPiece->x, currentPiece->y);
-                gameBoard.removeLine();
+                int linesCleared = gameBoard.removeLine();
+                // Xóa 1 dòng tăng 5ms, dòng thứ 2 tăng 10ms,... maxspeed là 50ms
+                speed = max(50, speed - linesCleared * 5);
 
                 // Giải phóng RAM của viên gạch cũ trước khi tạo viên mới
                 delete currentPiece;
