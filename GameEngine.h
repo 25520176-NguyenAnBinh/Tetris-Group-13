@@ -13,6 +13,7 @@ private:
     Board gameBoard;
     Piece* currentPiece;
     int speed;
+    int level;
     bool gameOver;
     int score;
 
@@ -97,6 +98,7 @@ private:
             }
             cout << "\n";
         }
+        cout << "Level: " << level << endl;
         cout << "\nScore: " << score << endl;
     }
 
@@ -104,6 +106,7 @@ public:
     GameEngine() {
         speed = 200; // Giữ nguyên tốc độ gốc
         currentPiece = nullptr;
+        level = 0;
         gameOver = false;
         score=0;
 
@@ -141,8 +144,9 @@ public:
                 else if (linesCleared == 2) score += 300;
                 else if (linesCleared == 3) score += 500;
                 else if (linesCleared == 4) score += 800;
+                level = score / 500;
                 
-                speed = max(50, speed - linesCleared * 5);
+                speed = max(50, 200 - level * 20);
 
                 // Giải phóng RAM của viên gạch cũ trước khi tạo viên mới
                 delete currentPiece;
