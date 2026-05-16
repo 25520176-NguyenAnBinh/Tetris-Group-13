@@ -1,0 +1,230 @@
+#pragma once
+#include <iostream>
+#include <conio.h>
+#include <windows.h>
+#include <ctime>
+#include <algorithm> // Thêm thư viện này cho hàm max()
+#include "Board.h"
+#include "DerivedPiece.h" 
+#include "HighScoreManager.h" // Nhúng file quản lý kỷ lục
+
+using namespace std;
+
+class GameEngine {
+private:
+    Board gameBoard;
+    Piece* currentPiece;
+    Piece* nextPiece;       // Quản lý khối gạch tiếp theo
+    Piece* holdPiece;      
+    int speed;
+    bool isHoldEmpty;      
+    bool canHold;
+    int level;
+    bool gameOver;
+    int score;
+    HighScoreManager scoreManager; // Đối tượng xử lý kỷ lục
+
+    void gotoxy(int x, int y) {
+        COORD c = { (SHORT)x, (SHORT)y };
+        SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), c);
+    }
+
+    // Hàm bổ trợ để tạo ngẫu nhiên một khối gạch
+    Piece* createRandomPiece() {
+        int r = rand() % 7;
+        switch (r) {
+            case 0: return new IPiece();
+            case 1: return new OPiece();
+            case 2: return new TPiece();
+            case 3: return new SPiece();
+            case 4: return new ZPiece();
+            case 5: return new JPiece();
+            case 6: return new LPiece();
+        }
+        return new IPiece();
+    }
+
+    // Cập nhật lại logic sinh gạch (gối đầu khối tiếp theo)
+    void spawnPiece() {
+        if (nextPiece == nullptr) {
+            nextPiece = createRandomPiece();
+        }
+        
+        // Lấy khối tiếp theo làm khối hiện tại và tạo mới khối tiếp theo
+        currentPiece = nextPiece;
+        nextPiece = createRandomPiece();
+
+        currentPiece->x = 4;
+        currentPiece->y = 0;
+
+        if (gameBoard.checkCollision(*currentPiece, currentPiece->x, currentPiece->y)) {
+            gameOver = true;
+        }
+    }
+
+    void handleInput() {
+        if (_kbhit()) {
+            char c = _getch();
+            if (c == 'a' && !gameBoard.checkCollision(*currentPiece, currentPiece->x - 1, currentPiece->y))
+                currentPiece->x--;
+
+            if (c == 'd' && !gameBoard.checkCollision(*currentPiece, currentPiece->x + 1, currentPiece->y))
+                currentPiece->x++;
+
+            if (c == 'x' && !gameBoard.checkCollision(*currentPiece, currentPiece->x, currentPiece->y + 1))
+                currentPiece->y++;
+
+            if (c == 'w') {
+                currentPiece->rotate();
+                if (gameBoard.checkCollision(*currentPiece, currentPiece->x, currentPiece->y)) {
+                    currentPiece->rotate();
+                    currentPiece->rotate();
+                    currentPiece->rotate();
+                }
+            }
+            if (c == 'c' && canHold) {
+                if (isHoldEmpty) {
+                    holdPiece = currentPiece;
+                    isHoldEmpty = false;
+                    spawnPiece(); 
+                }
+                else {
+                    Piece* temp = currentPiece;
+                    currentPiece = holdPiece;
+                    holdPiece = temp;
+                    currentPiece->x = 4;
+                    currentPiece->y = 0;
+                }
+                canHold = false;
+            }
+            if (c == 'q') exit(0);
+        }
+    }
+
+    void draw() {
+        gotoxy(0, 0);
+        for (int i = 0; i < H; i++) {
+            for (int j = 0; j < W; j++) {
+                bool isPieceDrawn = false;
+
+                if (currentPiece != nullptr &&
+                    i >= currentPiece->y && i < currentPiece->y + 4 &&
+                    j >= currentPiece->x && j < currentPiece->x + 4)
+                {
+                    char pieceChar = currentPiece->getCell(i - currentPiece->y, j - currentPiece->x);
+                    if (pieceChar != ' ') {
+                        cout << pieceChar << pieceChar; 
+                        isPieceDrawn = true;
+                    }
+                }
+
+                if (!isPieceDrawn) {
+                    char boardChar = gameBoard.getCell(i, j);
+                    if (boardChar == '#') cout << "##";
+                    else if (boardChar == ' ') cout << "  ";
+                    else cout << boardChar << boardChar; 
+                }
+            }
+            cout << "\n";
+        }
+        
+        // Thống kê thông tin cơ bản và hiển thị Kỷ lục (High Score)
+        cout << "Level: " << level << "    \n";
+        cout << "Score: " << score << "    \n";
+        cout << "High Score: " << scoreManager.loadHighScore() << "    \n";
+
+        // VẼ KHỐI GẠCH TIẾP THEO (NEXT PIECE) Ở BÊN PHẢI BÀN CỜ
+        int offsetX = W * 2 + 5; // Căn lề phải dựa trên độ rộng bàn cờ
+        gotoxy(offsetX, 2);  cout << "==================";
+        gotoxy(offsetX, 3);  cout << "   NEXT PIECE     ";
+        gotoxy(offsetX, 4);  cout << "==================";
+        
+        for (int i = 0; i < 4; i++) {
+            gotoxy(offsetX, 5 + i);
+            cout << "    "; // Lề trong ô
+            for (int j = 0; j < 4; j++) {
+                char nextChar = nextPiece->getCell(i, j);
+                if (nextChar != ' ') cout << nextChar << nextChar;
+                else cout << "  ";
+            }
+            cout << "    ";
+        }
+        gotoxy(offsetX, 9);  cout << "==================";
+    }
+
+public:
+    GameEngine() {
+        speed = 200; 
+        currentPiece = nullptr;
+        nextPiece = nullptr; // Khởi tạo con trỏ rỗng
+        holdPiece = nullptr;
+        isHoldEmpty = true;
+        canHold = true;
+        level = 0;
+        gameOver = false;
+        score = 0;
+
+        HANDLE out = GetStdHandle(STD_OUTPUT_HANDLE);
+        CONSOLE_CURSOR_INFO cursorInfo;
+        GetConsoleCursorInfo(out, &cursorInfo);
+        cursorInfo.bVisible = false;
+        SetConsoleCursorInfo(out, &cursorInfo);
+    }
+
+    ~GameEngine() {
+        if (currentPiece != nullptr) delete currentPiece;
+        if (nextPiece != nullptr) delete nextPiece; // Giải phóng RAM cho nextPiece
+        if (holdPiece != nullptr) delete holdPiece;
+    }
+
+    void run() {
+        srand((unsigned int)time(0));
+        system("cls");
+        spawnPiece();
+
+        while (!gameOver) {
+            handleInput();
+
+            if (!gameBoard.checkCollision(*currentPiece, currentPiece->x, currentPiece->y + 1)) {
+                currentPiece->y++;
+            }
+            else {
+                gameBoard.lockPiece(*currentPiece, currentPiece->x, currentPiece->y);
+                int linesCleared = gameBoard.removeLine();
+                
+                if (linesCleared == 1) score += 100;
+                else if (linesCleared == 2) score += 300;
+                else if (linesCleared == 3) score += 500;
+                else if (linesCleared == 4) score += 800;
+                
+                level = score / 500;
+                speed = max(50, 200 - level * 20);
+
+                delete currentPiece;
+                spawnPiece();
+                canHold = true;
+            }
+
+            draw();
+            Sleep(speed);
+        }
+        
+        // Xử lý khi kết thúc game: Cập nhật kỷ lục mới nếu có
+        bool isNewRecord = scoreManager.updateHighScore(score);
+
+        system("cls");
+        gotoxy(10, 8);  cout << "=========================";
+        gotoxy(10, 9);  cout << "       GAME OVER         ";
+        gotoxy(10, 10); cout << "=========================";
+        gotoxy(10, 12); cout << "Your Score: " << score;
+        gotoxy(10, 13); 
+        if (isNewRecord) {
+            cout << "NEW HIGH SCORE!! 🏆";
+        } else {
+            cout << "High Score: " << scoreManager.loadHighScore();
+        }
+        
+        gotoxy(10, 16);
+        system("pause");
+    }
+};
