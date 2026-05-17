@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <iostream>
 #include <conio.h>
 #include <windows.h>
@@ -17,6 +17,12 @@ private:
     Piece* currentPiece;
     int speed;
     GameState state;
+    Piece* holdPiece;
+    bool isHoldEmpty;
+    bool canHold;
+    int level;
+    bool gameOver;
+    int score;
 
     // Hàm di chuyển con trỏ console (Giữ nguyên từ code gốc)
     void gotoxy(int x, int y) {
@@ -39,6 +45,9 @@ private:
         // Đặt vị trí xuất phát giống code cũ của em
         currentPiece->x = 4;
         currentPiece->y = 0;
+        if (gameBoard.checkCollision(*currentPiece, currentPiece->x, currentPiece->y)) {
+            gameOver = true;
+        }
     }
 
     // Tương đương khối lệnh if(_kbhit()) trong code gốc
@@ -73,6 +82,28 @@ private:
                         currentPiece->rotate();
                     }
                 }
+				// Phím c để giữ gạch vào Hold hoặc hoán đổi với gạch trong Hold
+                if (c == 'c' && canHold) {
+                    if (isHoldEmpty) {
+                        // Lần đầu bấm: Cất gạch hiện tại đi, đẻ ra gạch mới
+                        holdPiece = currentPiece;
+                        isHoldEmpty = false;
+                        spawnPiece();
+                    }
+                    else {
+                        // Đã có gạch: Hoán đổi 2 con trỏ cho nhau
+                        Piece* temp = currentPiece;
+                        currentPiece = holdPiece;
+                        holdPiece = temp;
+
+                        // Đặt lại tọa độ cho gạch vừa lấy ra từ Hold
+                        currentPiece->x = 4;
+                        currentPiece->y = 0;
+                    }
+
+                    // Khóa lại, không cho đổi liên tục trong lúc đang rơi nữa
+                    canHold = false;
+                }
                 if (c == 'q') exit(0); // Thoát game ngay lập tức như code gốc
             }
         }
@@ -89,7 +120,7 @@ private:
         cout << "|   Nhan phim [P] mot lan nua de tiep tuc  |\n";
         cout << "|                                          |\n";
         cout << "|==========================================|\n";
-}
+    }
 
     // Tương đương hàm draw() cũ, nhưng lấy dữ liệu thông qua OOP
     void draw() {
@@ -120,13 +151,21 @@ private:
             }
             cout << "\n";
         }
+        cout << "Level: " << level << endl;
+        cout << "\nScore: " << score << endl;
     }
 
 public:
     GameEngine() {
-        speed = 200; // Giữ nguyên tốc độ gốc
+        speed = 200; 
         currentPiece = nullptr;
         state = PLAYING;
+        holdPiece = nullptr;
+        isHoldEmpty = true;
+        canHold = true;
+        level = 0;
+        gameOver = false;
+        score = 0;
 
         // Ẩn con trỏ chuột
         HANDLE out = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -138,6 +177,7 @@ public:
 
     ~GameEngine() {
         if (currentPiece != nullptr) delete currentPiece;
+        if (holdPiece != nullptr) delete holdPiece;
     }
 
     // Hàm thay thế cho int main() cũ
@@ -147,7 +187,7 @@ public:
         spawnPiece();
 
         // Vòng lặp vô tận y hệt code gốc
-        while (true) {
+        while (!gameOver) {
             handleInput();
             if (state == PLAYING) {
                 // Logic rơi y hệt code cũ: canMove(0,1) thì y++, else khóa và đẻ mới
@@ -158,11 +198,18 @@ public:
                     gameBoard.lockPiece(*currentPiece, currentPiece->x, currentPiece->y);
                     int linesCleared = gameBoard.removeLine();
                     // Xóa 1 dòng tăng 5ms, dòng thứ 2 tăng 10ms,... maxspeed là 50ms
-                    speed = max(50, speed - linesCleared * 5);
-    
+                    if (linesCleared == 1) score += 100;
+                    else if (linesCleared == 2) score += 300;
+                    else if (linesCleared == 3) score += 500;
+                    else if (linesCleared == 4) score += 800;
+                    level = score / 500;
+
+                    speed = max(50, 200 - level * 20);
+
                     // Giải phóng RAM của viên gạch cũ trước khi tạo viên mới
                     delete currentPiece;
                     spawnPiece();
+                    canHold = true;
                 }
                 draw();
             }
@@ -172,5 +219,11 @@ public:
             }
             Sleep(speed);
         }
+
+        gotoxy(10, 10);
+        cout << "===== GAME OVER =====";
+
+        gotoxy(10, 12);
+        system("pause");
     }
 };
