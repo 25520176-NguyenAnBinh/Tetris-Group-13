@@ -7,7 +7,7 @@
 #include "DerivedPiece.h" 
 #include "Lobby.h"
 #include "DifficultyManager.h"
-#include "HighScoreManager"
+#include "HighScoreManager.h"
 using namespace std;
 
 // Các trạng thái của game
@@ -21,6 +21,7 @@ private:
     int speed;
 	  Lobby lobby;
 	  DifficultyManager difficultyManager;
+    HighScoreManager highScoreManager;
     GameState state;
     bool isPauseDrawn; // Thêm biến bool này nhằm mục đích khống chế lỗi không xóa sạch được màn hình pause, nguyên nhân xác định: do hàm drawPauseScreen(); bị gọi lặp lại nên in đè lên game
     Piece* holdPiece;
@@ -176,6 +177,7 @@ private:
         }
         cout << "Level: " << level << endl;
         cout << "\nScore: " << score << endl;
+		cout << "High Score: " << highScoreManager.loadHighScore() << "   " << endl; // <-- In kỷ lục đọc từ file (thêm khoảng trắng để tránh lỗi lem chữ khi số giảm)
 		    // Xác định tọa độ X bên phải bàn cờ (Độ rộng bàn cờ kí tự kép W*2 + 5 ô khoảng cách)
         int offsetX = W * 2 + 5; 
         
@@ -303,17 +305,28 @@ public:
                 }
 
                 // Thêm trường hợp của trạng thái gameover để dừng game
-                case GAMEOVER:
-                {
-                    gotoxy(10, 10);
-                    cout << "===== GAME OVER =====";
+               case GAMEOVER:
+{
+    system("cls"); // Xóa sạch màn hình game trước khi hiện thông báo kết thúc
+    gotoxy(10, 8);
+    cout << "===== GAME OVER =====";
+    gotoxy(10, 10);
+    cout << "Your Score: " << score;
 
-                    gotoxy(10, 12);
-                    system("pause");
+    // Kiểm tra xem điểm số hiện tại có phá kỷ lục cũ không
+    gotoxy(10, 11);
+    if (highScoreManager.updateHighScore(score)) {
+        cout << "NEW HIGH SCORE!! CONGRATULATIONS!"; // Nếu phá kỷ lục, tự động lưu và chúc mừng
+    } else {
+        cout << "High Score: " << highScoreManager.loadHighScore(); // Nếu không phá được, hiện lại kỷ lục cũ
+    }
 
-                    exit(0); // Thoát
-                    break;
-                }
+    gotoxy(10, 13);
+    system("pause");
+
+    exit(0); // Thoát
+    break;
+}
             }
                 Sleep(speed);
         }
