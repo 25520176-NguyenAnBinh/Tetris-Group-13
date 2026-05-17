@@ -197,7 +197,6 @@ public:
                 else {
                     gameBoard.lockPiece(*currentPiece, currentPiece->x, currentPiece->y);
                     int linesCleared = gameBoard.removeLine();
-                    // Xóa 1 dòng tăng 5ms, dòng thứ 2 tăng 10ms,... maxspeed là 50ms
                     if (linesCleared == 1) score += 100;
                     else if (linesCleared == 2) score += 300;
                     else if (linesCleared == 3) score += 500;
