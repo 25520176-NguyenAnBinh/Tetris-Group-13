@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <iostream>
 #include <conio.h>
 #include <windows.h>
@@ -8,13 +8,17 @@
 
 using namespace std;
 
+// Các trạng thái của game
+enum GameState { PLAYING, PAUSED };
+
 class GameEngine {
 private:
     Board gameBoard;
     Piece* currentPiece;
     int speed;
-    Piece* holdPiece;      
-    bool isHoldEmpty;      
+    GameState state;
+    Piece* holdPiece;
+    bool isHoldEmpty;
     bool canHold;
     int level;
     bool gameOver;
@@ -42,55 +46,80 @@ private:
         currentPiece->x = 4;
         currentPiece->y = 0;
         if (gameBoard.checkCollision(*currentPiece, currentPiece->x, currentPiece->y)) {
-    gameOver = true;
-}
+            gameOver = true;
+        }
     }
 
     // Tương đương khối lệnh if(_kbhit()) trong code gốc
     void handleInput() {
         if (_kbhit()) {
             char c = _getch();
-            if (c == 'a' && !gameBoard.checkCollision(*currentPiece, currentPiece->x - 1, currentPiece->y))
-                currentPiece->x--;
-
-            if (c == 'd' && !gameBoard.checkCollision(*currentPiece, currentPiece->x + 1, currentPiece->y))
-                currentPiece->x++;
-
-            if (c == 'x' && !gameBoard.checkCollision(*currentPiece, currentPiece->x, currentPiece->y + 1))
-                currentPiece->y++;
-
-            if (c == 'w') {
-                currentPiece->rotate();
-                // Nếu xoay mà bị đè vào tường -> xoay ngược lại 3 lần (về như cũ)
-                if (gameBoard.checkCollision(*currentPiece, currentPiece->x, currentPiece->y)) {
-                    currentPiece->rotate();
-                    currentPiece->rotate();
-                    currentPiece->rotate();
-                }
-            }
-            if (c == 'c' && canHold) {
-                if (isHoldEmpty) {
-                    // Lần đầu bấm: Cất gạch hiện tại đi, đẻ ra gạch mới
-                    holdPiece = currentPiece;
-                    isHoldEmpty = false;
-                    spawnPiece();
+            // Bấm P để tạm dừng hoặc tiếp tục
+            if (c == 'p' || c == 'P') {
+                if (state == PLAYING) {
+                    state = PAUSED;
                 }
                 else {
-                    // Đã có gạch: Hoán đổi 2 con trỏ cho nhau
-                    Piece* temp = currentPiece;
-                    currentPiece = holdPiece;
-                    holdPiece = temp;
-
-                    // Đặt lại tọa độ cho gạch vừa lấy ra từ Hold
-                    currentPiece->x = 4;
-                    currentPiece->y = 0;
+                    state = PLAYING;
                 }
-
-                // Khóa lại, không cho đổi liên tục trong lúc đang rơi nữa
-                canHold = false;
+                system("cls"); // Xóa màn hình để chuẩn bị chuyển đổi giao diện hiển thị
+                return;
             }
-            if (c == 'q') exit(0); // Thoát game ngay lập tức như code gốc
+            // Chỉ cho phép di chuyển gạch nếu game đang ở trạng thái PLAYING
+            if (state == PLAYING) {
+                if (c == 'a' && !gameBoard.checkCollision(*currentPiece, currentPiece->x - 1, currentPiece->y))
+                    currentPiece->x--;
+                if (c == 'd' && !gameBoard.checkCollision(*currentPiece, currentPiece->x + 1, currentPiece->y))
+                    currentPiece->x++;
+                if (c == 'x' && !gameBoard.checkCollision(*currentPiece, currentPiece->x, currentPiece->y + 1))
+                    currentPiece->y++;
+                if (c == 'w') {
+                    currentPiece->rotate();
+                    // Nếu xoay mà bị đè vào tường -> xoay ngược lại 3 lần (về như cũ)
+                    if (gameBoard.checkCollision(*currentPiece, currentPiece->x, currentPiece->y)) {
+                        currentPiece->rotate();
+                        currentPiece->rotate();
+                        currentPiece->rotate();
+                    }
+                }
+				// Phím c để giữ gạch vào Hold hoặc hoán đổi với gạch trong Hold
+                if (c == 'c' && canHold) {
+                    if (isHoldEmpty) {
+                        // Lần đầu bấm: Cất gạch hiện tại đi, đẻ ra gạch mới
+                        holdPiece = currentPiece;
+                        isHoldEmpty = false;
+                        spawnPiece();
+                    }
+                    else {
+                        // Đã có gạch: Hoán đổi 2 con trỏ cho nhau
+                        Piece* temp = currentPiece;
+                        currentPiece = holdPiece;
+                        holdPiece = temp;
+
+                        // Đặt lại tọa độ cho gạch vừa lấy ra từ Hold
+                        currentPiece->x = 4;
+                        currentPiece->y = 0;
+                    }
+
+                    // Khóa lại, không cho đổi liên tục trong lúc đang rơi nữa
+                    canHold = false;
+                }
+                if (c == 'q') exit(0); // Thoát game ngay lập tức như code gốc
+            }
         }
+    }
+
+    // Vẽ màn hình dừng game
+    void drawPauseScreen() {
+        gotoxy(0, 0);
+        cout << "|==========================================|\n";
+        cout << "|              GAME PAUSED                 |\n";
+        cout << "|==========================================|\n";
+        cout << "|                                          |\n";
+        cout << "|        Tro choi dang tam dung...         |\n";
+        cout << "|   Nhan phim [P] mot lan nua de tiep tuc  |\n";
+        cout << "|                                          |\n";
+        cout << "|==========================================|\n";
     }
 
     // Tương đương hàm draw() cũ, nhưng lấy dữ liệu thông qua OOP
@@ -128,14 +157,15 @@ private:
 
 public:
     GameEngine() {
-        speed = 200; // Giữ nguyên tốc độ gốc
+        speed = 200; 
         currentPiece = nullptr;
+        state = PLAYING;
         holdPiece = nullptr;
         isHoldEmpty = true;
         canHold = true;
         level = 0;
         gameOver = false;
-        score=0;
+        score = 0;
 
         // Ẩn con trỏ chuột
         HANDLE out = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -159,36 +189,40 @@ public:
         // Vòng lặp vô tận y hệt code gốc
         while (!gameOver) {
             handleInput();
+            if (state == PLAYING) {
+                // Logic rơi y hệt code cũ: canMove(0,1) thì y++, else khóa và đẻ mới
+                if (!gameBoard.checkCollision(*currentPiece, currentPiece->x, currentPiece->y + 1)) {
+                    currentPiece->y++;
+                }
+                else {
+                    gameBoard.lockPiece(*currentPiece, currentPiece->x, currentPiece->y);
+                    int linesCleared = gameBoard.removeLine();
+                    if (linesCleared == 1) score += 100;
+                    else if (linesCleared == 2) score += 300;
+                    else if (linesCleared == 3) score += 500;
+                    else if (linesCleared == 4) score += 800;
+                    level = score / 500;
 
-            // Logic rơi y hệt code cũ: canMove(0,1) thì y++, else khóa và đẻ mới
-            if (!gameBoard.checkCollision(*currentPiece, currentPiece->x, currentPiece->y + 1)) {
-                currentPiece->y++;
+                    speed = max(50, 200 - level * 20);
+
+                    // Giải phóng RAM của viên gạch cũ trước khi tạo viên mới
+                    delete currentPiece;
+                    spawnPiece();
+                    canHold = true;
+                }
+                draw();
             }
-            else {
-                gameBoard.lockPiece(*currentPiece, currentPiece->x, currentPiece->y);
-                int linesCleared = gameBoard.removeLine();
-                // Xóa 1 dòng tăng 5ms, dòng thứ 2 tăng 10ms,... maxspeed là 50ms
-                if (linesCleared == 1) score += 100;
-                else if (linesCleared == 2) score += 300;
-                else if (linesCleared == 3) score += 500;
-                else if (linesCleared == 4) score += 800;
-                level = score / 500;
-                
-                speed = max(50, 200 - level * 20);
-
-                // Giải phóng RAM của viên gạch cũ trước khi tạo viên mới
-                delete currentPiece;
-                spawnPiece();
-                canHold = true;
+            else if (state == PAUSED) {
+                // Vẽ màn hình thông báo
+                drawPauseScreen();
             }
-
-            draw();
             Sleep(speed);
         }
-        gotoxy(10, 10);
-cout << "===== GAME OVER =====";
 
-gotoxy(10, 12);
-system("pause");
+        gotoxy(10, 10);
+        cout << "===== GAME OVER =====";
+
+        gotoxy(10, 12);
+        system("pause");
     }
 };
