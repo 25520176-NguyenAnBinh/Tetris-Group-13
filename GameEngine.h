@@ -78,6 +78,19 @@ private:
         }
     }
 
+    // Vẽ màn hình dừng game
+    void drawPauseScreen() {
+        gotoxy(0, 0);
+        cout << "|==========================================|\n";
+        cout << "|              GAME PAUSED                 |\n";
+        cout << "|==========================================|\n";
+        cout << "|                                          |\n";
+        cout << "|        Tro choi dang tam dung...         |\n";
+        cout << "|   Nhan phim [P] mot lan nua de tiep tuc  |\n";
+        cout << "|                                          |\n";
+        cout << "|==========================================|\n";
+}
+
     // Tương đương hàm draw() cũ, nhưng lấy dữ liệu thông qua OOP
     void draw() {
         gotoxy(0, 0);
@@ -151,8 +164,12 @@ public:
                     delete currentPiece;
                     spawnPiece();
                 }
+                draw();
             }
-            draw();
+            else if (state == PAUSED) {
+                // Vẽ màn hình thông báo
+                drawPauseScreen();
+            }
             Sleep(speed);
         }
     }
