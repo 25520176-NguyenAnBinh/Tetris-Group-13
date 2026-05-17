@@ -7,6 +7,7 @@
 #include "DerivedPiece.h" 
 #include "Lobby.h"
 #include "DifficultyManager.h"
+#include "HighScoreManager"
 using namespace std;
 
 // Các trạng thái của game
