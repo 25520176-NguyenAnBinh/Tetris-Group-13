@@ -16,6 +16,7 @@ class GameEngine {
 private:
     Board gameBoard;
     Piece* currentPiece;
+    Piece* nextPiece;
     int speed;
 	  Lobby lobby;
 	  DifficultyManager difficultyManager;
@@ -34,20 +35,37 @@ private:
     }
 
     // Tương đương hàm khởi tạo khối gạch + copyBlocks() cũ
-    void spawnPiece() {
+
+    // Hàm phụ trợ dùng chung để sinh ngẫu nhiên một con trỏ khối gạch
+    Piece* createRandomPiece() {
         int r = rand() % 7;
         switch (r) {
-        case 0: currentPiece = new IPiece(); break;
-        case 1: currentPiece = new OPiece(); break;
-        case 2: currentPiece = new TPiece(); break;
-        case 3: currentPiece = new SPiece(); break;
-        case 4: currentPiece = new ZPiece(); break;
-        case 5: currentPiece = new JPiece(); break;
-        case 6: currentPiece = new LPiece(); break;
+            case 0: return new IPiece();
+            case 1: return new OPiece();
+            case 2: return new TPiece();
+            case 3: return new SPiece();
+            case 4: return new ZPiece();
+            case 5: return new JPiece();
+            case 6: return new LPiece();
         }
-        // Đặt vị trí xuất phát giống code cũ của em
+        return new IPiece();
+    }
+
+    void spawnPiece() {
+        // Nếu là lượt đầu tiên chạy game, chưa có khối tiếp theo -> tạo mới
+        if (nextPiece == nullptr) {
+            nextPiece = createRandomPiece();
+        }
+        
+        // Lấy khối "tiếp theo" chuyển sang làm khối "hiện tại"
+        currentPiece = nextPiece;
+        
+        // Tiếp tục chuẩn bị khối gạch mới cho lượt sau nữa
+        nextPiece = createRandomPiece();
+
         currentPiece->x = 4;
         currentPiece->y = 0;
+        
         if (gameBoard.checkCollision(*currentPiece, currentPiece->x, currentPiece->y)) {
             state = GAMEOVER;
         }
@@ -157,7 +175,26 @@ private:
         }
         cout << "Level: " << level << endl;
         cout << "\nScore: " << score << endl;
-    }
+		    // Xác định tọa độ X bên phải bàn cờ (Độ rộng bàn cờ kí tự kép W*2 + 5 ô khoảng cách)
+        int offsetX = W * 2 + 5; 
+        
+        gotoxy(offsetX, 2);  cout << "==================";
+        gotoxy(offsetX, 3);  cout << "   NEXT PIECE     ";
+        gotoxy(offsetX, 4);  cout << "==================";
+        
+        // Vòng lặp quét ma trận 4x4 của khối gạch tiếp theo
+        for (int i = 0; i < 4; i++) {
+            gotoxy(offsetX, 5 + i);
+            cout << "    "; // Tạo lề trống bên trái khung gạch
+            for (int j = 0; j < 4; j++) {
+                char nextChar = nextPiece->getCell(i, j);
+                if (nextChar != ' ') cout << nextChar << nextChar;
+                else cout << "  ";
+            }
+            cout << "    ";
+        }
+        gotoxy(offsetX, 9);  cout << "==================";
+    } // Đây là dấu đóng ngoặc nhọn kết thúc hàm draw() của bạn
 
     void updateGame()
     {
@@ -190,6 +227,7 @@ public:
     GameEngine() {
         speed = 200;
         currentPiece = nullptr;
+		    nextPiece = nullptr;
         state = LOBBY;
         holdPiece = nullptr;
         isHoldEmpty = true;
@@ -207,6 +245,7 @@ public:
 
     ~GameEngine() {
         if (currentPiece != nullptr) delete currentPiece;
+		if (nextPiece != nullptr) delete nextPiece;
         if (holdPiece != nullptr) delete holdPiece;
     }
 
